@@ -2,3 +2,9 @@ venv/
 .DS_Store
 *.pyc
 __pycache__
+.flaskenv
+.env
+config.py
+migrations/
+*.db
+
