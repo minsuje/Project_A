@@ -1,6 +1,13 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, PasswordField, BooleanField, validators
-from wtforms.validators import DataRequired
+from wtforms import (
+    StringField,
+    TextAreaField,
+    PasswordField,
+    BooleanField,
+    validators,
+    EmailField,
+)
+from wtforms.validators import DataRequired, Length, EqualTo, Email
 
 
 class QuestionForm(FlaskForm):
@@ -18,11 +25,23 @@ class AnswerForm(FlaskForm):
     )
 
 
-# class RegisterForm(FlaskForm):
-#     username = StringField(
-#         "Username", validators=[DataRequired(), validators.Length(min=3, max=25)]
-#     )
-#     email = StringField("Email", validators=[DataRequired(), Email()])
-#     password = PasswordField("New Password", validators=[DataRequired()])
-#     passowrd_confirm = PasswordField("Repeat Password")
-#     accept_rules = BooleanField("I accept the TOS", [validators.InputRequired()])
+class UserCreateForm(FlaskForm):
+    username = StringField(
+        "사용자이름", validators=[DataRequired(), Length(min=3, max=25)]
+    )
+    email = EmailField("이메일", validators=[DataRequired(), Email()])
+    password1 = PasswordField(
+        "비밀번호",
+        validators=[
+            DataRequired(),
+            EqualTo("password2", "비밀번호가 일치하지 않습니다."),
+        ],
+    )
+    password2 = PasswordField("비밀번호확인", validators=[DataRequired()])
+
+
+class UserLoginForm(FlaskForm):
+    username = StringField(
+        "Username", validators=[DataRequired(), Length(min=3, max=25)]
+    )
+    password = PasswordField("Password", validators=[DataRequired()])
