@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, url_for
+from flask import Blueprint, render_template, request, url_for, g, flash
 from werkzeug.utils import redirect
 from datetime import datetime
 
@@ -7,6 +7,7 @@ from app import db
 from app.models.models import Question
 from app.forms import QuestionForm, AnswerForm
 
+from app.views.auth_views import login_required
 
 bp = Blueprint("question", __name__, url_prefix="/question")
 
@@ -30,6 +31,7 @@ def detail(question_id):
 
 
 @bp.route("/create/", methods=("GET", "POST"))
+@login_required
 def create():
     form = QuestionForm()
     if request.method == "POST" and form.validate_on_submit():
@@ -37,8 +39,52 @@ def create():
             subject=form.subject.data,
             content=form.content.data,
             create_date=datetime.now(),
+            user=g.user,
         )
         db.session.add(question)
         db.session.commit()
         return redirect(url_for("main.index"))
     return render_template("question/question_form.html", form=form)
+
+
+@bp.route("/modify/<int:question_id>", methods=("GET", "POST"))
+@login_required
+def modify(question_id):
+    question = Question.query.get_or_404(question_id)
+    if g.user != question.user:
+        flash("수정권한이 없습니다.")
+        return redirect(url_for("question.detail", question_id=question_id))
+    if request.method == "POST":  # Post 요청일시
+        form = QuestionForm()
+        if form.validate_on_submit():
+            form.populate_obj(question)
+            question.modify_date = datetime.now()
+            db.session.commit()
+            return redirect(url_for("question.detail", question_id=question_id))
+    else:  # Get 요청일시
+        form = QuestionForm(obj=question)
+    return render_template("question/question_form.html", form=form)
+
+
+@bp.route("/delete/<int:question_id>")
+@login_required
+def delete(question_id):
+    question = Question.query.get_or_404(question_id)
+    if g.user != question.user:
+        flash("삭제권한이 없습니다.")
+        return redirect(url_for("question.detail", question_id=question.id))
+    db.session.delete(question)
+    db.session.commit()
+    return redirect(url_for("question._list"))
+
+
+@bp.route("/vote/<int:question_id>")
+@login_required
+def vote(question_id):
+    _question = Question.query.get_or_404(question_id)
+    if g.user == _question.user:
+        flash("본인이 작성한 글은 추천할수 없습니다.")
+    else:
+        _question.voter.append(g.user)
+        db.session.commit()
+    return redirect(url_for("question.detail", question_id=question_id))
