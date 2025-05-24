@@ -5,6 +5,9 @@ from flask_sqlalchemy import SQLAlchemy
 # SQlite 설정 수정
 from sqlalchemy import MetaData
 
+# Markdown
+from flaskext.markdown import Markdown
+
 import config
 
 # SQLite 설정 수정
@@ -47,6 +50,9 @@ def create_app():
     app.register_blueprint(question_views.bp)
     app.register_blueprint(answer_views.bp)
     app.register_blueprint(auth_views.bp)
+
+    # markdown
+    Markdown(app, extensions=["nl2br", "fenced_code"])
 
     return app
 
